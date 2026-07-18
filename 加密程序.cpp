@@ -7,7 +7,7 @@
 #include<commctrl.h>
 #include<shlobj.h>
 using namespace std;
-const int N=1000,M=200;int cnt=max(4u,min(thread::hardware_concurrency(),16u)),totol,nex,tot;atomic<bool>running(true),isrun;
+const int N=100,M=200;int cnt=max(4u,min(thread::hardware_concurrency(),16u)),totol,nex,tot;atomic<bool>running(true),isrun;
 mpz_class n,p,q,e,d,prime[N];gmp_randstate_t state;ifstream fin;ofstream fout;double sstim,stim,tim;char a;atomic<int>now;bool automod,silent;
 string input[256],in="明文.txt",out="密文.txt",s,mod,savepath;queue<string>output[256];mt19937 rnd;atomic<HWND>table;INITCOMMONCONTROLSEX icex;
 const char c[95]="w7)OE$_AT%l;\'smgLu,2krNFieWVJ`p-#{ZQ.t0q}j5K8!\\G=XI*M?S4hbc9nf/]|vz@:6~B(<U^Co\"3H[+x>RdPaYyD1&";
@@ -52,8 +52,8 @@ LRESULT CALLBACK PrimeTableWndProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lPara
 			if(nmhdr->idFrom==1006&&nmhdr->code==LVN_GETDISPINFO){
 				NMLVDISPINFO* plvdi=(NMLVDISPINFO*)lParam;long long itemIndex=plvdi->item.iItem;
 				if(plvdi->item.mask&LVIF_TEXT)switch(plvdi->item.iSubItem){
-					case 0:sprintf(plvdi->item.pszText,"%s",to_string(itemIndex).substr(0,200).c_str());break;
-					case 1:sprintf(plvdi->item.pszText,"%s",to_string(prime[itemIndex]).substr(0,200).c_str());break;
+					case 0:snprintf(plvdi->item.pszText,200,"%lld",itemIndex);break;
+					case 1:snprintf(plvdi->item.pszText,200,"%s",to_string(prime[itemIndex]).c_str());break;
 				}
 			}
 			break;
@@ -138,8 +138,8 @@ inline wstring to_time(){wostringstream wsout;
 	if(sstim)wsout<<L" | 总耗时："<<tim-sstim<<"s ( "<<int((tim-sstim)/3600)<<"h "<<int((tim-sstim)/60)%60<<"m "<<fmod(tim-sstim,60)<<"s )";
 	return wsout.str();
 }
-[[noreturn]] inline void my_pause(){
-	gmp_randclear(state);print<<L"请按回车键继续..."<<flush;long long a,b;if(!silent)do a=get_time(),getline(cin,s),b=get_time();while(b-a<1);exit(0);
+[[noreturn]] inline void my_pause(){gmp_randclear(state);
+	print<<L"请按回车键继续..."<<flush;long long a,b;if(!silent)do a=get_time(),getline(cin,s),b=get_time();while(b-a<1&&cin.good());exit(0);
 }
 template<typename T>inline void open(T &f,const string &s){
 	f.open(s);if(!f.is_open())print<<L"无法打开 \""<<s<<L"\" ，请检查访问权限，确保文件存在\n"<<flush,my_pause();
@@ -165,24 +165,24 @@ inline void get(){
 inline void get2(){
 	do{mpz_urandomb(p.get_mpz_t(),state,1024),mpz_nextprime(p.get_mpz_t(),p.get_mpz_t());
 		mpz_urandomb(q.get_mpz_t(),state,1024),mpz_nextprime(q.get_mpz_t(),q.get_mpz_t());Sleep(0);
-	}while(abs(p-q)>>100==0);n=p*q;gete();d=getd();
+	}while(abs(p-q)>>100==0||p>>1000==0||q>>1000==0);n=p*q;gete();d=getd();
 }
 inline mpz_class read(const string &s){mpz_class x;istringstream sin(s);sin>>x;return x;}
 inline int read2(const string &s){int x;istringstream sin(s);sin>>x;return x;}
 inline void read3(const string&s,mpz_class f(const string&)){n=f(s.substr(1,s.find(',')-1));p=q=0;e=f(s.substr(s.find(',')+1,s.size()-s.find(',')-2));}
 inline bool check(const string &s){return !s.empty()&&s.find_first_not_of("0123456789")==string::npos;}
 inline bool check1(const string &s){mpz_class x;return check(s)&&(x=read(s),0<=x&&x<N);}
-inline bool check2(const string &s){mpz_class x;return check(s)&&(x=read(s),x>mpz_class(1)<<1000&&mpz_probab_prime_p(x.get_mpz_t(),25));}
-inline bool check3(const string &s){mpz_class x;return check(s)&&(x=read(s),1<x&&x<n&&gcd(x,mpz_class((p-1)*(q-1)))==1);}
+inline bool check2(const string &s){mpz_class x;return check(s)&&(x=read(s),x>>1000!=0&&mpz_probab_prime_p(x.get_mpz_t(),25));}
+inline bool check3(const string &s){mpz_class x;return check(s)&&(x=read(s),1<x&&x<n&&gcd(x,(p-1)*(q-1))==1);}
 inline bool check4(const string &s){
 	mpz_class n,e;return s.front()=='('&&s.back()==')'&&s.find(',')!=string::npos&&s.find_first_of(',')==s.find_last_of(',')&&
-		check(s.substr(1,s.find(',')-1))&&check(s.substr(s.find(',')+1,s.size()-s.find(',')-2))&&(n=read(s.substr(1,s.find(',')-1)))>
-		mpz_class(1)<<2000&&(e=read(s.substr(s.find(',')+1,s.size()-s.find(',')-2)),1<e&&e<n);
+		check(s.substr(1,s.find(',')-1))&&check(s.substr(s.find(',')+1,s.size()-s.find(',')-2))&&
+		(n=read(s.substr(1,s.find(',')-1)))>>2000!=0&&(e=read(s.substr(s.find(',')+1,s.size()-s.find(',')-2)),1<e&&e<n);
 }
 inline bool check5(const string &s){
 	mpz_class n,e;return s.front()=='('&&s.back()==')'&&s.find(',')!=string::npos&&s.find_first_of(',')==s.find_last_of(',')&&s.substr(1,s.find(',')-1)
 		.find_first_not_of(c2)==string::npos&&s.substr(s.find(',')+1,s.size()-s.find(',')-2).find_first_not_of(c2)==string::npos&&
-		(n=decompress(s.substr(1,s.find(',')-1)))>mpz_class(1)<<2000&&(e=decompress(s.substr(s.find(',')+1,s.size()-s.find(',')-2)),1<e&&e<n);
+		(n=decompress(s.substr(1,s.find(',')-1)))>>2000!=0&&(e=decompress(s.substr(s.find(',')+1,s.size()-s.find(',')-2)),1<e&&e<n);
 }
 inline unsigned int rndd(){unsigned int x=321564596;BYTE b[4];
 	if(!BCRYPT_SUCCESS(BCryptGenRandom(NULL,b,sizeof(b),BCRYPT_USE_SYSTEM_PREFERRED_RNG)))
@@ -196,7 +196,7 @@ inline void init_state(gmp_randstate_t &state){
 }
 void init(const int &id){
 	gmp_randstate_t state;init_state(state);mpz_class x;
-	for(int i=id;i<N;i+=cnt){mpz_urandomb(x.get_mpz_t(),state,1024);
+	for(int i=id;i<N;i+=cnt){do mpz_urandomb(x.get_mpz_t(),state,1024);while(x>>1000==0);
 		mpz_nextprime(x.get_mpz_t(),x.get_mpz_t());prime[i]=x,++now,Sleep(0);if(!running)break;}
 	gmp_randclear(state);
 }
@@ -287,8 +287,8 @@ inline void read_arg(const int argc,const char *const argv[]){
 			}else{if(string(argv[i])=="-s"&&++i==argc){
 				print<<L"警告：位于第 "<<i-1<<" 个参数：-s 后期望 <string> ，但没有找到\n"<<flush;continue;}s=argv[i];}
 			if(islower(mod[1])){if(check(s))d=read(s);else{print<<L"警告：位于第 "<<j<<" 个参数："<<mod<<" 指定的值无效\n"<<flush;continue;}}
-			else d=decompress(s);if(s=tolower(mod[1]),(s=="p"||s=="q")&&(d<=mpz_class(1)<<1000||!mpz_probab_prime_p(d.get_mpz_t(),25))||
-			s=="n"&&d<=mpz_class(1)<<2000){print<<L"警告：位于第 "<<j<<" 个参数："<<mod<<" 指定的值无效\n"<<flush;continue;}
+			else d=decompress(s);if(s=tolower(mod[1]),(s=="p"||s=="q")&&(d>>1000==0||!mpz_probab_prime_p(d.get_mpz_t(),25))||
+			s=="n"&&d>>2000==0){print<<L"警告：位于第 "<<j<<" 个参数："<<mod<<" 指定的值无效\n"<<flush;continue;}
 			if(s=="p")p=d;else if(s=="q")q=d;else if(s=="n")n=d;else e=d;
 		}else print<<L"警告：位于第 "<<i<<" 个参数：未知的 "<<mod<<"\n"<<flush;
 	}
@@ -351,6 +351,7 @@ int main(int argc,char *argv[]){
 	}
 	fout.close();tim=get_time()/1000.0,print<<to_process(tot,tot)<<" | "<<to_time()<<L"\n写入完毕，"<<flush;
 	if(!s.empty()){
+		if(savepath.empty()&&!_isatty(_fileno(stdin)))print<<L"警告：检测到当前非交互式终端，已切换为自动保存\n"<<flush,savepath="-auto";
 		if(savepath=="-null")a=0;else if(savepath=="-no")a=1;else if(!savepath.empty())print<<L"自动保存私钥中..."<<flush,a=save();
 		else{print<<L"是否保存私钥到文件？(Yes/No)（只检测第一个字符）："<<flush;getline(cin,mod),cin.clear();
 			while(mod.empty()||(mod=toupper(mod[0]),mod!="Y"&&mod!="N"))print<<L"输入无效，请重新输入："<<flush,getline(cin,mod),cin.clear();

@@ -45,7 +45,7 @@ inline wstring to_time(){wostringstream wsout;
 	return wsout.str();
 }
 [[noreturn]] inline void my_pause(){
-	print<<L"请按回车键继续..."<<flush;long long a,b;if(!silent)do a=get_time(),getline(cin,::a),b=get_time();while(b-a<1);exit(0);
+	print<<L"请按回车键继续..."<<flush;long long a,b;if(!silent)do a=get_time(),getline(cin,::a),b=get_time();while(b-a<1&&cin.good());exit(0);
 }
 template<typename T>inline void open(T &f,const string &s){
 	f.open(s);if(!f.is_open())print<<L"无法打开 \""<<s<<L"\" ，请检查访问权限，确保文件存在\n",my_pause();
@@ -58,7 +58,7 @@ inline mpz_class zh(const string &x){return fast_pow(decompress(x),d);}
 inline mpz_class read(const string &s){mpz_class x;istringstream sin(s);sin>>x;return x;}
 inline int read2(const string &s){int x;istringstream sin(s);sin>>x;return x;}
 inline void read3(const string&s,mpz_class f(const string&)){n=f(s.substr(1,s.find(',')-1));d=f(s.substr(s.find(',')+1,s.size()-s.find(',')-2));}
-inline bool check(const string &s){return !s.empty()&&s.front()!='0'&&s.find_first_not_of("0123456789")==string::npos;}
+inline bool check(const string &s){return !s.empty()&&s.find_first_not_of("0123456789")==string::npos;}
 inline bool check1(const string &s){
 	mpz_class n,d;return s.front()=='('&&s.back()==')'&&s.find(',')!=string::npos&&s.find_first_of(',')==s.find_last_of(',')&&
 		check(s.substr(1,s.find(',')-1))&&check(s.substr(s.find(',')+1,s.size()-s.find(',')-2))&&(n=read(s.substr(1,s.find(',')-1)))>
@@ -84,6 +84,7 @@ void work(int id){
 		++now,tot+=size;if(!running)break;
 	}
 }
+inline void clear(mpz_class &x){mpz_ptr z=x.get_mpz_t();if(z->_mp_d)SecureZeroMemory(z->_mp_d,z->_mp_alloc*sizeof(mp_limb_t));x=0;}
 inline string tolower(string s){for(char &c:s)c=tolower(c);return s;}
 inline void read_arg(const int argc,const char *const argv[]){
 	for(int i=1,j=1;i<argc;j=++i){
@@ -146,7 +147,7 @@ inline void read_arg(const int argc,const char *const argv[]){
 int main(int argc,char *argv[]){
 	read_arg(argc,argv);print.err=0;sstim=get_time()/1000.0;init_mt19937(rnd);
 	if(!n){
-		if(!_isatty(_fileno(stdin)))print.err=1,print<<L"错误：检测到当前非交互式终端，交互模式不可用，"
+		if(!_isatty(_fileno(stdin)))print.err=1,print<<L"错误：检测到当前非交互式终端，交互模式不可用，\n"
 			L"请使用命令行参数或使用交互式终端启动本程序\n"<<flush,exit(0);
 		print<<L"请选择输入的私钥类别：\n1. 输入自定义私钥 (n,d)\n2: 输入加密程序提供的私钥 (n,d)\n"<<flush;
 		getline(cin,a),cin.clear();while(a!="1"&&a!="2")print<<L"输入无效，请重新输入："<<flush,getline(cin,a),cin.clear();
@@ -170,7 +171,7 @@ int main(int argc,char *argv[]){
 		const int copy=now;if(copy==totol)break;if(copy>=nex)nex=min(totol,max(copy,nex)+int(rnd()%1000)),
 		tim=get_time()/1000.0,print<<to_process(copy,totol)<<" | "<<to_time()<<"\r"<<flush;sleep(10);
 	}
-	tim=get_time()/1000.0,print<<to_process(totol,totol)<<" | "<<to_time()<<L"\n解密完毕，写入文件中...\n"<<flush;nex=0;stim=get_time()/1000.0;
+	tim=get_time()/1000.0,print<<to_process(totol,totol)<<" | "<<to_time()<<L"\n解密完毕，写入文件中...\n"<<flush;nex=0;clear(n);clear(d);stim=tim;
 	for(int i=0;i<totol;i++){const auto p=output[i%cnt].front();output[i%cnt].pop();output2[p.first]+=p.second,cntt=max(cntt,p.first+1);}
 	for(int i=0;i<tot;i++){if(i/cntt>=output2[i%cntt].size())fout<<char(rnd()&255);else fout<<output2[i%cntt][i/cntt];
 		if(i>=nex)nex=min(int(tot),nex+int(rnd()%1000000)),tim=get_time()/1000.0,print<<to_process(i,tot)<<" | "<<to_time()<<"\r"<<flush;
